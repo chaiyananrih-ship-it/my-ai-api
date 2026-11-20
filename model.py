@@ -1,22 +1,49 @@
 """Download a public GGUF model once and run CPU inference with llama.cpp."""
 from __future__ import annotations
 
+import logging
 import os
 from threading import Lock
 from typing import Any, Iterator
 
 import streamlit as st
 
-MODEL_REPO = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
-MODEL_FILENAME = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
-MODEL_NAME = "Qwen2.5-0.5B-Instruct Q4_K_M"
+MODEL_REPO = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+MODEL_FILENAME = "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+MODEL_NAME = "Qwen2.5-1.5B-Instruct Q4_K_M"
+LEGACY_REPO = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+LOGGER = logging.getLogger(__name__)
 CONTEXT_TOKENS = 2048
 SYSTEM_PROMPT = (
     "คุณชื่อ Mali AI เป็นผู้ช่วย AI ที่สุภาพและเป็นมิตร "
     "ตอบเป็นภาษาไทยเมื่อผู้ใช้ถามภาษาไทย และตอบสั้นชัดเจน "
     "หากไม่ทราบคำตอบ ให้ยอมรับว่าไม่แน่ใจ อย่าสร้างข้อเท็จจริงขึ้นมาเอง "
-    "คุณเป็นโมเดล AI ขนาดเล็กและไม่สามารถท่องเว็บหรือดูภาพได้"
+    "คุณไม่สามารถท่องเว็บหรือดูภาพได้ กรุณาอธิบายทีละขั้นตอนเมื่อผู้ใช้ขอคำแนะนำ"
 )
+
+
+
+def remove_legacy_model_cache() -> None:
+    """Remove only the previous Qwen 0.5B model from Hugging Face's local cache.
+
+    Model weights are not committed to GitHub. Failure to delete cached files
+    must never block startup or touch unrelated model caches.
+    """
+    from huggingface_hub import scan_cache_dir
+
+    try:
+        cache = scan_cache_dir()
+        revisions = [
+            revision.commit_hash
+            for repo in cache.repos
+            if repo.repo_id == LEGACY_REPO and repo.repo_type == "model"
+            for revision in repo.revisions
+        ]
+        if revisions:
+            cache.delete_revisions(*revisions).execute()
+            LOGGER.info("Removed obsolete model cache: %s", LEGACY_REPO)
+    except (OSError, ValueError) as exc:
+        LOGGER.warning("Could not clean old model cache: %s", exc)
 
 
 @st.cache_resource(show_spinner=False)
@@ -25,6 +52,7 @@ def load_engine() -> tuple[Any, Lock]:
     from huggingface_hub import hf_hub_download
     from llama_cpp import Llama
 
+    remove_legacy_model_cache()
     path = hf_hub_download(repo_id=MODEL_REPO, filename=MODEL_FILENAME)
     model = Llama(
         model_path=path,
