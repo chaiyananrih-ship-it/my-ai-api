@@ -9,32 +9,25 @@ from typing import Any, Iterator
 
 import streamlit as st
 
-MODEL_REPO = "ggml-org/Qwen3-1.7B-GGUF"
-MODEL_FILENAME = "Qwen3-1.7B-Q4_K_M.gguf"
-MODEL_NAME = "Qwen3-1.7B Q4_K_M"
+MODEL_REPO = "bartowski/Qwen_Qwen3.5-0.8B-GGUF"
+MODEL_FILENAME = "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
+MODEL_NAME = "Qwen3.5-0.8B Q5_K_M"
 LEGACY_REPOS = (
     "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
     "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "ggml-org/Qwen3-1.7B-GGUF",
 )
 LOGGER = logging.getLogger(__name__)
 CONTEXT_TOKENS = 2048
 SYSTEM_PROMPT = (
-    "คุณคือ Mali AI ผู้ช่วยภาษาไทยที่ตอบคำถามชัดเจน สุภาพ และเป็นธรรมชาติ "
-    "อ่านคำถามให้ครบ แล้วใช้เฉพาะข้อเท็จจริงที่เกี่ยวข้องกับคำถาม "
-    "หากเป็นคำถามเกี่ยวกับบริการในข้อมูลอ้างอิง ต้องยึดข้อมูลนั้นเป็นหลัก "
-    "ถ้าข้อเท็จจริงยืนยันเรื่องหนึ่งได้ แต่ยืนยันอีกเรื่องไม่ได้ ให้ตอบเรื่องที่รู้ก่อน "
-    "จากนั้นบอกสั้นๆ ว่าเรื่องที่เหลือยังยืนยันไม่ได้ ห้ามฟันธงเกินข้อมูล "
-    "เช่น เวลาทำงานปกติวันจันทร์ถึงศุกร์ ไม่ได้พิสูจน์ว่าไม่มีคนปฏิบัติงานวันเสาร์ "
-    "ต้องแยกการส่งคำร้องออนไลน์ออกจากเวลาที่เจ้าหน้าที่รับเรื่องหรือดำเนินงาน "
-    "ตอบเป็นคำตอบจริงแก่ผู้ใช้เลย ห้ามเขียนหัวข้อแบบรายงานวิเคราะห์ "
-    "ห้ามพูดถึงกฎ คำสั่ง ระบบพรอมป์ หรือการประเมินข้อมูลของคุณ "
-    "สำหรับคำถามทั่วไปที่ไม่เกี่ยวกับบริการ สามารถตอบตามความรู้ทั่วไปได้โดยไม่อ้างว่าข้อมูลบริการครอบคลุม "
-    "ไม่สามารถเข้าถึงเว็บหรือรูปภาพได้ อย่าสร้างรายละเอียดขึ้นเอง "
-    "ตัวอย่างสไตล์ตอบ (ไม่ใช่ข้อมูลจริงของบริการ): "
-    "ถ้าระบบรับรายการผ่านเว็บทุกวัน แต่พนักงานทำงานตามปกติวันธรรมดา "
-    "เมื่อถามว่าส่งรายการวันอาทิตย์แล้วเสร็จทันทีไหม ให้ตอบว่า "
-    "'ส่งรายการทางเว็บไซต์วันอาทิตย์ได้ครับ แต่ยังยืนยันไม่ได้ว่าพนักงานจะดำเนินการให้ทันทีในวันนั้น' "
-    "/no_think"
+    "คุณคือ Mali AI ผู้ช่วยตอบคำถามที่เข้าใจง่ายและเป็นธรรมชาติ "
+    "อ่านคำถามให้ครบทุกประเด็น แล้วตอบตรงคำถามด้วยเหตุผลสั้นๆ "
+    "ใช้ข้อมูลอ้างอิงเป็นหลัก หากรู้เพียงบางส่วน ให้ตอบส่วนที่รู้ก่อน "
+    "แล้วบอกว่าส่วนใดยังยืนยันไม่ได้ ห้ามแต่งข้อเท็จจริงหรือฟันธงเกินข้อมูล "
+    "เวลาทำการปกติไม่ได้ยืนยันว่าไม่มีเจ้าหน้าที่ในวันหยุด "
+    "แยกเวลารับคำร้องของเว็บไซต์ออกจากเวลาทำงานของเจ้าหน้าที่ "
+    "ห้ามอธิบายกฎหรือกระบวนการคิดของคุณ "
+    "สำหรับคำถามทั่วไปที่ไม่เกี่ยวกับข้อมูลบริการ ให้ตอบจากความรู้ทั่วไปได้"
 )
 
 
@@ -49,7 +42,7 @@ def reference_information() -> str:
         LOGGER.warning("Cannot read knowledge file: %s", exc)
         return ""
     facts = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
-    return "\n".join(facts)[:2000]
+    return "\n".join(facts)[:1200]
 
 
 def remove_legacy_model_cache() -> None:
@@ -83,7 +76,7 @@ def load_engine() -> tuple[Any, Lock]:
         model_path=path,
         n_ctx=CONTEXT_TOKENS,
         n_threads=max(1, min(2, os.cpu_count() or 2)),
-        n_batch=96,
+        n_batch=64,
         n_gpu_layers=0,
         use_mmap=True,
         verbose=False,
@@ -108,7 +101,7 @@ def create_prompt(model: Any, conversation: list[dict[str, str]], max_tokens: in
     if budget < 64:
         raise ValueError("ข้อมูลอ้างอิงยาวเกินไป กรุณาลดข้อความใน knowledge.txt")
     selected = []
-    for message in reversed(conversation[-14:]):
+    for message in reversed(conversation[-6:]):
         count = _token_count(model, message["content"])
         if count > budget:
             if not selected:
@@ -168,8 +161,8 @@ def generate_chunks(
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            top_p=0.9,
-            repeat_penalty=1.08,
+            top_p=0.85,
+            repeat_penalty=1.05,
             stream=True,
         )
 
