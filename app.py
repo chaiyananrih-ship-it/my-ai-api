@@ -85,7 +85,7 @@ if not st.session_state.messages:
     st.info("💡 ลองถามว่า 'ช่วยแนะนำไอเดียทำเว็บโรงเรียน 3 แบบ' หรือ 'อธิบาย Python ให้เข้าใจง่าย' — โมเดลขนาดเล็กอาจตอบช้าและผิดพลาดได้")
 
 for item in st.session_state.messages:
-    with st.chat_message(item["role"], avatar="✦" if item["role"] == "assistant" else "👤"):
+    with st.chat_message(item["role"], avatar="🤖" if item["role"] == "assistant" else "👤"):
         st.markdown(item["content"])
 
 question = st.chat_input("พิมพ์ข้อความถึง Mali AI...", max_chars=650)
@@ -94,7 +94,7 @@ if question:
     with st.chat_message("user", avatar="👤"):
         st.markdown(question)
 
-    with st.chat_message("assistant", avatar="✦"):
+    with st.chat_message("assistant", avatar="🤖"):
         try:
             with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 491 MB)..."):
                 engine, engine_lock = load_engine()
