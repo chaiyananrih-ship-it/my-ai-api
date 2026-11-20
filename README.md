@@ -1,76 +1,62 @@
-# ✦ Mali AI — Free Thai Chat on Streamlit
+# Mali AI — Streamlit + Qwen3-1.7B
 
-แชตบอต AI ที่รันโมเดล **Qwen2.5-1.5B-Instruct (4-bit GGUF)** บน **CPU ของ Streamlit Community Cloud** โดยตรง ไม่เรียก API แบบเสียเงิน ไม่ต้องใส่ API Key และไม่ต้องผูกบัตรเครดิตสำหรับการเริ่มใช้แพลตฟอร์มฟรี
+AI Assistant ภาษาไทยที่รันบน CPU ของ Streamlit Community Cloud โดยไม่ต้องมี API Key ใช้โมเดล **Qwen3-1.7B-Q4_K_M** จาก [ggml-org](https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF) ขนาดประมาณ **1.28 GB** (โมเดล Qwen2.5 เดิมไม่ถูกใช้งานแล้ว)
 
-> ⚠️ โมเดลเล็ก (~1.5B พารามิเตอร์) รองรับภาษาไทย แต่ความแม่นยำและความเร็วมีข้อจำกัด โดยเฉพาะงานใช้เหตุผลซับซ้อน บริการฟรีไม่รับประกันว่าจะทำงาน 24/7 และ Cloud อาจมีข้อจำกัด RAM/CPU
+> Streamlit Community Cloud ฟรีมีหน่วยความจำที่จัดสรรตามเครื่อง (สูงสุดราว 2.7 GB ไม่ได้รับประกัน) โมเดลนี้อาจโหลดไม่ได้ในบาง instance และอาจตอบช้าบน CPU
 
-## 🚀 วิธี Deploy ผ่าน GitHub (ไม่ต้องติดตั้ง Python ในเครื่อง)
+## Deploy
 
-1. เข้า [share.streamlit.io](https://share.streamlit.io) → ลงชื่อเข้าใช้ด้วย GitHub
-2. กด **Create app / New app** → **Deploy a public app from GitHub** แล้วเลือก repository `chaiyananrih-ship-it/my-ai-api`
-3. กำหนด **Main file path:** `app.py`
-4. ใน **Advanced settings** เลือก **Python 3.11** (แนะนำ) แล้วกด Deploy
-5. เปิดเว็บที่ได้รับและพิมพ์คำถามแรกเพื่อโหลดโมเดล
+1. เข้า https://share.streamlit.io แล้วเข้าระบบด้วย GitHub
+2. เลือก Repository `chaiyananrih-ship-it/my-ai-api` และ Branch `main`
+3. Main file path: `app.py`; แนะนำ Python 3.11
+4. Deploy แล้วเปิดเว็บเพื่อทดลองส่งคำถาม
+5. หากเคย Deploy แล้ว ให้ใช้ Manage app → Reboot app เพื่อโหลดโมเดลใหม่
 
-**ครั้งแรกที่ส่งข้อความ:** ระบบจะดาวน์โหลดโมเดล `qwen2.5-1.5b-instruct-q4_k_m.gguf` (~1.12 GB) จาก Hugging Face โดยอัตโนมัติ อาจช้าหรือโหลดไม่ผ่านหาก Cloud จำกัดทรัพยากร/อินเทอร์เน็ต เมื่อ instance รีสตาร์ตไฟล์ cache อาจหายและต้องดาวน์โหลดใหม่
+**ครั้งแรก** ระบบดาวน์โหลด `Qwen3-1.7B-Q4_K_M.gguf` (~1.28 GB) จาก Hugging Face ตอนส่งข้อความครั้งแรก และจะลบแคชของโมเดล Qwen2.5-0.5B / 1.5B ที่เคยดาวน์โหลดใน instance นี้เท่านั้น (หากมี) ไม่มีไฟล์โมเดลใหญ่บน GitHub
 
-## 🧹 การเปลี่ยนโมเดลและลบตัวเก่า
+## ปรับให้ AI ตอบตามข้อมูลของเรา
 
-โปรเจกต์เปลี่ยนมาใช้ **Qwen2.5-1.5B-Instruct Q4_K_M** (~1.12 GB) เพียงรุ่นเดียว ไม่ได้เก็บไฟล์ GGUF ไว้ใน GitHub
+เปิด [knowledge.txt](knowledge.txt) ใน GitHub → กด Edit (รูปดินสอ) → เพิ่ม **ข้อเท็จจริงขององค์กร** แบบ 1 ข้อต่อบรรทัด → Commit changes
 
-เมื่อแอปโหลดโมเดลใหม่ ฟังก์ชัน `remove_legacy_model_cache()` จะล้างแคชเฉพาะโมเดล 0.5B รุ่นเดิมออกจากแคช Hugging Face ของเครื่องนั้น หากไม่พบแคชเดิมก็ข้ามได้เลย ไม่ลบไฟล์อื่น การเปิดเว็บผ่าน Streamlit หลัง Deploy ควรรีสตาร์ตแอปเพื่อเคลียร์โมเดลเดิมในหน่วยความจำ
-
-โมเดล 1.5B ฉลาดกว่ารุ่น 0.5B โดยทั่วไป แต่ใช้ RAM และ CPU มากขึ้น และอาจเกินข้อจำกัดของ Streamlit Cloud บางเครื่อง ให้ดู **Manage app → Logs** หากเว็บช้าหรือมีปัญหา
-
-## 📁 โครงสร้างไฟล์
+**สำคัญ:** ข้อมูลที่ขึ้นต้นด้วย `#` เป็นเพียงคอมเมนต์ ไม่ถูกส่งให้ AI ต้องลบเครื่องหมาย `#` หน้าบรรทัดที่ต้องการเปิดใช้งานก่อน ตัวอย่าง:
 
 ```text
-my-ai-api/
-├── app.py                 # UI แชต Streamlit
-├── model.py               # ดาวน์โหลด GGUF, โหลดโมเดล และ stream คำตอบ
-├── requirements.txt       # Python dependencies
-├── .streamlit/
-│   └── config.toml        # สีธีม
-├── .gitignore
-├── tests/
-│   └── test_source.py
-└── README.md
+ระบบเปิดรับคำร้องได้ตลอด 24 ชั่วโมง
+เจ้าหน้าที่ทำงานวันจันทร์–ศุกร์ เวลา 08.30–16.30 น.
+วันเสาร์และวันอาทิตย์ไม่มีเจ้าหน้าที่ให้บริการตามปกติ
 ```
 
-## 💻 รันบนคอมพิวเตอร์
+แอปจะโหลดกฎจาก `model.py` และข้อเท็จจริงจาก `knowledge.txt` ประกอบกับคำถาม **ทุกครั้ง** ไม่ต้องให้ผู้ใช้งานพิมพ์กฎใหม่ เมื่อแก้ `knowledge.txt` บน GitHub ให้รอ Streamlit redeploy ก่อนทดสอบอีกครั้ง
 
-แนะนำ Python 3.11 บน Linux x86_64 หรือแพลตฟอร์มที่ติดตั้ง `llama-cpp-python` ได้
+เพื่อควบคุม RAM และ context จะส่งข้อมูลอ้างอิงได้สูงสุด 2,000 ตัวอักษร และมี context 2,048 tokens; ควรเขียนข้อมูลให้สั้น ชัดเจน อย่าใส่ข้อมูลส่วนบุคคล รหัสผ่าน หรือ API Key เพราะ Repository นี้เป็น Public
+
+## โครงสร้าง
+
+```
+app.py                  Streamlit Chat UI
+model.py                โหลด Qwen3, system prompt, knowledge, inference
+knowledge.txt           ข้อมูลที่ผู้ดูแลเพิ่มเพื่อให้ AI ใช้ตอบคำถาม
+requirements.txt        Python packages
+.streamlit/config.toml  Theme
+tests/test_source.py    โครงสร้างและสเปกโมเดล
+```
+
+## รันบนเครื่องส่วนตัว
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## 🔧 ปรับแต่ง
+## ข้อจำกัด
 
-- เปลี่ยนชื่อเว็บ หน้าแรก และข้อความ UI ที่ `app.py`
-- เปลี่ยน system prompt ใน `model.py` ตัวแปร `SYSTEM_PROMPT`
-- ปรับความยาวคำตอบและ temperature ได้ที่ sidebar
-- ไฟล์โมเดลไม่รวมใน repo เพราะมีขนาดใหญ่ โหลดจาก Hugging Face ตอนใช้งาน
-- แชร์โมเดลตัวเดียวกันระหว่างผู้ใช้ เพื่อลด RAM และใช้ lock ป้องกันรันอนุมานพร้อมกัน
+- โมเดล 1.7B คาดว่าตอบและทำตามคำสั่งได้ดีกว่า Qwen2.5-1.5B โดยทั่วไป แต่ไม่ได้รับประกันว่าจะตอบถูกทุกเรื่อง
+- ระบบตั้งใจให้ตอบแบบตรงประเด็น ไม่แสดงเนื้อหาภายในแท็ก `<think>`; โหมดไม่แสดงกระบวนการคิดช่วยให้ใช้ CPU ฟรีได้เร็วขึ้น
+- ไม่มีอินเทอร์เน็ตให้ AI ค้นหาข้อมูลสด และไม่มี API endpoint ภายนอก: Streamlit เป็นเว็บแชต
+- ประวัติแชตเก็บใน Session ของ browser และไม่ถาวร
+- ยังไม่ได้ยืนยันว่ารุ่นใหม่นี้รันได้จริงบน instance Streamlit Cloud ของผู้ใช้ ให้ตรวจ Manage app → Logs หากมีปัญหา
+- รุ่น Qwen3.5 ที่ใหญ่กว่านี้มีความสามารถสูงขึ้นได้ แต่ใช้ทรัพยากรและความเข้ากันได้ของ runtime เพิ่มขึ้น
 
-## ⚠️ ข้อจำกัดที่ควรทราบ
-
-- **ไม่มี API endpoint สำหรับเว็บไซต์ภายนอก:** Streamlit เป็นเว็บ UI ไม่ใช่ FastAPI hosting แม้ repo จะชื่อ `my-ai-api`
-- CPU ฟรีตอบช้ากว่ารุ่น 0.5B และอาจใช้ RAM มากกว่าทรัพยากรที่ได้รับ และมีการจำกัด context 2048 tokens เพื่อควบคุม RAM
-- ระบบจำบทสนทนาเฉพาะ session ของผู้ใช้ ไม่บันทึกถาวร
-- หากมีผู้ใช้หลายคนพร้อมกัน คำตอบจะต่อคิวกัน
-- การติดตั้ง wheel อาจล้มเหลวตามความพร้อมของเครือข่าย/ระบบ
-- ยังไม่ได้ยืนยันการ deploy จริงบน Streamlit Cloud
-- ไม่ควรใช้กับข้อมูลส่วนบุคคลที่อ่อนไหว หรือคาดหวังคำตอบถูกต้อง 100%
-
-## 🔗 แหล่งอ้างอิง
-
-- [Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy)
-- [Qwen2.5-1.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct)
-- [Official Qwen GGUF](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF)
-- [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)
-
-Model weights are distributed separately by their publisher. Review the model's license for your intended use.
+อ้างอิง: [Qwen3-1.7B GGUF](https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF) · [Streamlit Deploy](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy)
