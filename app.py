@@ -43,12 +43,12 @@ with st.sidebar:
     st.caption("AI รันบน CPU ของเซิร์ฟเวอร์ · ไม่ใช้ API Key")
     st.divider()
     st.markdown("**การตั้งค่าการตอบ**")
-    max_tokens = st.slider("ความยาวสูงสุด", min_value=64, max_value=448, value=224, step=32)
-    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.25, step=0.05)
+    max_tokens = st.slider("ความยาวสูงสุด", min_value=64, max_value=256, value=160, step=32)
+    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.0, value=0.3, step=0.05)
     st.markdown("**โมเดล**")
     st.code(MODEL_NAME, language=None)
-    st.caption("Qwen3 · 1.7B · Q4_K_M · CPU")
-    st.caption("ข้อมูลอ้างอิงจาก knowledge.txt จะถูกส่งพร้อมกฎการตอบทุกคำถาม")
+    st.caption("Qwen3.5 · 0.8B · Q5_K_M · CPU")
+    st.caption("ใช้กฎแบบสั้นและข้อมูลอ้างอิงทุกคำถาม · ส่งประวัติล่าสุดไม่เกิน 6 ข้อความ")
     st.warning("ข้อมูลใน knowledge.txt ตอนนี้เป็นสถานการณ์สมมติสำหรับทดสอบ ไม่ใช่ข้อมูลบริการจริง")
     st.divider()
     if st.button("↺ เริ่มการสนทนาใหม่", use_container_width=True):
@@ -90,7 +90,7 @@ for item in st.session_state.messages:
     with st.chat_message(item["role"], avatar="🤖" if item["role"] == "assistant" else "👤"):
         st.markdown(item["content"])
 
-question = st.chat_input("พิมพ์ข้อความถึง Mali AI...", max_chars=650)
+question = st.chat_input("พิมพ์ข้อความถึง Mali AI...", max_chars=500)
 if question:
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user", avatar="👤"):
@@ -98,7 +98,7 @@ if question:
 
     with st.chat_message("assistant", avatar="🤖"):
         try:
-            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 1.28 GB)..."):
+            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 650 MB)..."):
                 engine, engine_lock = load_engine()
             messages = create_prompt(engine, st.session_state.messages, max_tokens)
             answer = st.write_stream(
@@ -116,4 +116,4 @@ if question:
         else:
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
-st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen3-1.7B • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
+st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen3.5-0.8B • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
