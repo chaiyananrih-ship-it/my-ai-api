@@ -81,3 +81,11 @@ def test_chat_template_and_reasoning_filter_removed():
     assert "def _hide_thinking" not in source
     assert 'if not has_text:' in source
     assert 'stream=False' in source
+
+
+def test_first_boot_without_huggingface_cache_does_not_fail():
+    """A fresh Streamlit instance has no HF cache: cleanup must be optional."""
+    source = (ROOT / "model.py").read_text(encoding="utf-8")
+    assert "cache_dir = Path(HF_HUB_CACHE)" in source
+    assert "if not cache_dir.is_dir():" in source
+    assert "except Exception as exc:" in source
