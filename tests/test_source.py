@@ -63,10 +63,10 @@ def test_short_prompt_and_small_history():
         for target in node.targets
         if isinstance(target, ast.Name)
     }
-    prompt_parts = assignments["SYSTEM_PROMPT"].values
-    prompt_text = "".join(ast.literal_eval(part) for part in prompt_parts)
+    prompt_text = ast.literal_eval(assignments["SYSTEM_PROMPT"])
     assert len(prompt_text) < 500
     assert "ห้ามแต่งข้อเท็จจริง" in prompt_text
+    assert "conversation[-6:]" in (ROOT / "model.py").read_text(encoding="utf-8")
 
 
 def test_new_model_in_app():
