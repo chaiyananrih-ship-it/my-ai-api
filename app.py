@@ -43,11 +43,12 @@ with st.sidebar:
     st.caption("AI รันบน CPU ของเซิร์ฟเวอร์ · ไม่ใช้ API Key")
     st.divider()
     st.markdown("**การตั้งค่าการตอบ**")
-    max_tokens = st.slider("ความยาวสูงสุด", min_value=48, max_value=320, value=144, step=16)
-    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.55, step=0.05)
+    max_tokens = st.slider("ความยาวสูงสุด", min_value=64, max_value=448, value=224, step=32)
+    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.35, step=0.05)
     st.markdown("**โมเดล**")
     st.code(MODEL_NAME, language=None)
-    st.caption("Qwen2.5 · 1.5B · Q4_K_M · CPU")
+    st.caption("Qwen3 · 1.7B · Q4_K_M · CPU")
+    st.caption("ข้อมูลอ้างอิงจาก knowledge.txt จะถูกส่งพร้อมกฎการตอบทุกคำถาม")
     st.divider()
     if st.button("↺ เริ่มการสนทนาใหม่", use_container_width=True):
         st.session_state.messages = []
@@ -96,7 +97,7 @@ if question:
 
     with st.chat_message("assistant", avatar="🤖"):
         try:
-            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 1.12 GB)..."):
+            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 1.28 GB)..."):
                 engine, engine_lock = load_engine()
             messages = create_prompt(engine, st.session_state.messages, max_tokens)
             answer = st.write_stream(
@@ -114,4 +115,4 @@ if question:
         else:
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
-st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen2.5-1.5B-Instruct • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
+st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen3-1.7B • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
