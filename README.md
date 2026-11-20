@@ -1,8 +1,8 @@
 # ✦ Mali AI — Free Thai Chat on Streamlit
 
-แชตบอต AI ที่รันโมเดล **Qwen2.5-0.5B-Instruct (4-bit GGUF)** บน **CPU ของ Streamlit Community Cloud** โดยตรง ไม่เรียก API แบบเสียเงิน ไม่ต้องใส่ API Key และไม่ต้องผูกบัตรเครดิตสำหรับการเริ่มใช้แพลตฟอร์มฟรี
+แชตบอต AI ที่รันโมเดล **Qwen2.5-1.5B-Instruct (4-bit GGUF)** บน **CPU ของ Streamlit Community Cloud** โดยตรง ไม่เรียก API แบบเสียเงิน ไม่ต้องใส่ API Key และไม่ต้องผูกบัตรเครดิตสำหรับการเริ่มใช้แพลตฟอร์มฟรี
 
-> ⚠️ โมเดลเล็ก (~0.5B พารามิเตอร์) รองรับภาษาไทย แต่ความแม่นยำและความเร็วมีข้อจำกัด โดยเฉพาะงานใช้เหตุผลซับซ้อน บริการฟรีไม่รับประกันว่าจะทำงาน 24/7 และ Cloud อาจมีข้อจำกัด RAM/CPU
+> ⚠️ โมเดลเล็ก (~1.5B พารามิเตอร์) รองรับภาษาไทย แต่ความแม่นยำและความเร็วมีข้อจำกัด โดยเฉพาะงานใช้เหตุผลซับซ้อน บริการฟรีไม่รับประกันว่าจะทำงาน 24/7 และ Cloud อาจมีข้อจำกัด RAM/CPU
 
 ## 🚀 วิธี Deploy ผ่าน GitHub (ไม่ต้องติดตั้ง Python ในเครื่อง)
 
@@ -12,7 +12,15 @@
 4. ใน **Advanced settings** เลือก **Python 3.11** (แนะนำ) แล้วกด Deploy
 5. เปิดเว็บที่ได้รับและพิมพ์คำถามแรกเพื่อโหลดโมเดล
 
-**ครั้งแรกที่ส่งข้อความ:** ระบบจะดาวน์โหลดโมเดล `qwen2.5-0.5b-instruct-q4_k_m.gguf` (~491 MB) จาก Hugging Face โดยอัตโนมัติ อาจช้าหรือโหลดไม่ผ่านหาก Cloud จำกัดทรัพยากร/อินเทอร์เน็ต เมื่อ instance รีสตาร์ตไฟล์ cache อาจหายและต้องดาวน์โหลดใหม่
+**ครั้งแรกที่ส่งข้อความ:** ระบบจะดาวน์โหลดโมเดล `qwen2.5-1.5b-instruct-q4_k_m.gguf` (~1.12 GB) จาก Hugging Face โดยอัตโนมัติ อาจช้าหรือโหลดไม่ผ่านหาก Cloud จำกัดทรัพยากร/อินเทอร์เน็ต เมื่อ instance รีสตาร์ตไฟล์ cache อาจหายและต้องดาวน์โหลดใหม่
+
+## 🧹 การเปลี่ยนโมเดลและลบตัวเก่า
+
+โปรเจกต์เปลี่ยนมาใช้ **Qwen2.5-1.5B-Instruct Q4_K_M** (~1.12 GB) เพียงรุ่นเดียว ไม่ได้เก็บไฟล์ GGUF ไว้ใน GitHub
+
+เมื่อแอปโหลดโมเดลใหม่ ฟังก์ชัน `remove_legacy_model_cache()` จะล้างแคชเฉพาะโมเดล 0.5B รุ่นเดิมออกจากแคช Hugging Face ของเครื่องนั้น หากไม่พบแคชเดิมก็ข้ามได้เลย ไม่ลบไฟล์อื่น การเปิดเว็บผ่าน Streamlit หลัง Deploy ควรรีสตาร์ตแอปเพื่อเคลียร์โมเดลเดิมในหน่วยความจำ
+
+โมเดล 1.5B ฉลาดกว่ารุ่น 0.5B โดยทั่วไป แต่ใช้ RAM และ CPU มากขึ้น และอาจเกินข้อจำกัดของ Streamlit Cloud บางเครื่อง ให้ดู **Manage app → Logs** หากเว็บช้าหรือมีปัญหา
 
 ## 📁 โครงสร้างไฟล์
 
@@ -51,7 +59,7 @@ streamlit run app.py
 ## ⚠️ ข้อจำกัดที่ควรทราบ
 
 - **ไม่มี API endpoint สำหรับเว็บไซต์ภายนอก:** Streamlit เป็นเว็บ UI ไม่ใช่ FastAPI hosting แม้ repo จะชื่อ `my-ai-api`
-- CPU ฟรีตอบช้าได้ และมีการจำกัด context 2048 tokens เพื่อควบคุม RAM
+- CPU ฟรีตอบช้ากว่ารุ่น 0.5B และอาจใช้ RAM มากกว่าทรัพยากรที่ได้รับ และมีการจำกัด context 2048 tokens เพื่อควบคุม RAM
 - ระบบจำบทสนทนาเฉพาะ session ของผู้ใช้ ไม่บันทึกถาวร
 - หากมีผู้ใช้หลายคนพร้อมกัน คำตอบจะต่อคิวกัน
 - การติดตั้ง wheel อาจล้มเหลวตามความพร้อมของเครือข่าย/ระบบ
@@ -61,8 +69,8 @@ streamlit run app.py
 ## 🔗 แหล่งอ้างอิง
 
 - [Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy)
-- [Qwen2.5-0.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct)
-- [Official Qwen GGUF](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF)
+- [Qwen2.5-1.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct)
+- [Official Qwen GGUF](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF)
 - [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)
 
 Model weights are distributed separately by their publisher. Review the model's license for your intended use.
