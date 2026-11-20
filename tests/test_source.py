@@ -30,9 +30,9 @@ def test_active_model_is_upgraded():
         and isinstance(node.targets[0], ast.Name)
         and node.targets[0].id in {"MODEL_REPO", "MODEL_FILENAME", "MODEL_NAME"}
     }
-    assert settings["MODEL_REPO"] == "bartowski/Qwen_Qwen3.5-0.8B-GGUF"
-    assert settings["MODEL_FILENAME"] == "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
-    assert "0.8B" in settings["MODEL_NAME"]
+    assert settings["MODEL_REPO"] == "bartowski/Llama-3.2-1B-Instruct-GGUF"
+    assert settings["MODEL_FILENAME"] == "Llama-3.2-1B-Instruct-Q4_K_M.gguf"
+    assert "1B" in settings["MODEL_NAME"]
 
 
 def test_reference_file_exists():
@@ -71,5 +71,13 @@ def test_short_prompt_and_small_history():
 
 def test_new_model_in_app():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert "Qwen3.5" in app
-    assert "Qwen3-1.7B" not in app
+    assert "Meta Llama 3.2" in app
+    assert "Qwen3.5" not in app
+
+
+def test_chat_template_and_reasoning_filter_removed():
+    source = (ROOT / "model.py").read_text(encoding="utf-8")
+    assert 'chat_format="chatml"' not in source
+    assert "def _hide_thinking" not in source
+    assert 'if not has_text:' in source
+    assert 'stream=False' in source
