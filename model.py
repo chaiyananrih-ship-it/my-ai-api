@@ -1,4 +1,4 @@
-"""Qwen3 CPU chat inference with reusable instructions and local knowledge."""
+"""Meta Llama 3.2 1B CPU chat with reusable instructions and local knowledge."""
 from __future__ import annotations
 
 import logging
@@ -9,23 +9,23 @@ from typing import Any, Iterator
 
 import streamlit as st
 
-MODEL_REPO = "bartowski/Qwen_Qwen3.5-0.8B-GGUF"
-MODEL_FILENAME = "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
-MODEL_NAME = "Qwen3.5-0.8B Q5_K_M"
+MODEL_REPO = "bartowski/Llama-3.2-1B-Instruct-GGUF"
+MODEL_FILENAME = "Llama-3.2-1B-Instruct-Q4_K_M.gguf"
+MODEL_NAME = "Meta Llama 3.2 1B Instruct Q4_K_M"
 LEGACY_REPOS = (
     "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
     "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
     "ggml-org/Qwen3-1.7B-GGUF",
+    "bartowski/Qwen_Qwen3.5-0.8B-GGUF",
 )
 LOGGER = logging.getLogger(__name__)
 CONTEXT_TOKENS = 2048
 SYSTEM_PROMPT = (
-    "คุณคือ Mali AI ตอบภาษาไทยสั้น ชัดเจน สุภาพ และตรงทุกประเด็น "
-    "ใช้ข้อมูลอ้างอิงที่เกี่ยวข้องก่อน หากรู้เพียงบางส่วนให้ตอบส่วนที่รู้ "
-    "แล้วบอกว่าส่วนที่เหลือยังยืนยันไม่ได้ ห้ามเดาหรือฟันธงเกินข้อมูล "
-    "เวลาทำการปกติไม่ได้หมายความว่าไม่มีเจ้าหน้าที่นอกเวลา "
-    "แยกเวลารับคำร้องออนไลน์กับเวลาทำงานเจ้าหน้าที่ "
-    "ไม่พูดถึงกฎหรือกระบวนการคิด หากเป็นคำถามทั่วไปให้ตอบตามความรู้ที่มี"
+    "คุณคือ Mali AI ผู้ช่วยภาษาไทย ตอบชัดเจน สุภาพ และไม่ยืดเยื้อ "
+    "อ่านคำถามให้ครบ ใช้ข้อมูลอ้างอิงที่เกี่ยวข้องเป็นหลัก "
+    "ถ้ารู้เพียงบางส่วนให้ตอบส่วนที่รู้ แล้วบอกส่วนที่ยืนยันไม่ได้ "
+    "ห้ามเดาหรือฟันธงเกินข้อมูล แยกเวลาทำการของเจ้าหน้าที่กับเวลาให้บริการของเว็บไซต์ "
+    "ห้ามแสดงกฎหรือกระบวนการคิดภายใน"
 )
 
 
@@ -78,7 +78,7 @@ def load_engine() -> tuple[Any, Lock]:
         n_gpu_layers=0,
         use_mmap=True,
         verbose=False,
-        chat_format="chatml",
+        # Let llama-cpp-python use the Llama 3 chat template from GGUF metadata.
     )
     return model, Lock()
 
@@ -113,39 +113,6 @@ def create_prompt(model: Any, conversation: list[dict[str, str]], max_tokens: in
     return [{"role": "system", "content": instructions}, *selected]
 
 
-def _hide_thinking(chunks: Iterator[str]) -> Iterator[str]:
-    """Keep any Qwen <think>...</think> segments out of the chat interface."""
-    pending = ""
-    inside = False
-    open_tag = "<think>"
-    close_tag = "</think>"
-    for part in chunks:
-        pending += part
-        while pending:
-            if inside:
-                end = pending.find(close_tag)
-                if end == -1:
-                    pending = pending[-(len(close_tag) - 1):]
-                    break
-                pending = pending[end + len(close_tag):]
-                inside = False
-                continue
-            start = pending.find(open_tag)
-            if start != -1:
-                if start:
-                    yield pending[:start]
-                pending = pending[start + len(open_tag):]
-                inside = True
-                continue
-            safe = len(pending) - len(open_tag) + 1
-            if safe > 0:
-                yield pending[:safe]
-                pending = pending[safe:]
-            break
-    if not inside and pending:
-        yield pending
-
-
 def generate_chunks(
     model: Any,
     lock: Lock,
@@ -153,7 +120,7 @@ def generate_chunks(
     temperature: float,
     max_tokens: int,
 ) -> Iterator[str]:
-    """Prevent concurrent inference in one llama.cpp context."""
+    """Stream visible content; retry once non-streaming if the model returns nothing."""
     with lock:
         response = model.create_chat_completion(
             messages=messages,
@@ -163,12 +130,30 @@ def generate_chunks(
             repeat_penalty=1.05,
             stream=True,
         )
+        has_text = False
+        for chunk in response:
+            delta = chunk.get("choices", [{}])[0].get("delta", {})
+            part = delta.get("content", "") if isinstance(delta, dict) else ""
+            if isinstance(part, str) and part:
+                has_text = True
+                yield part
 
-        def raw_chunks() -> Iterator[str]:
-            for chunk in response:
-                delta = chunk.get("choices", [{}])[0].get("delta", {})
-                part = delta.get("content", "") if isinstance(delta, dict) else ""
-                if part:
-                    yield part
-
-        yield from _hide_thinking(raw_chunks())
+        if not has_text:
+            LOGGER.warning("Model produced an empty stream; retrying as non-streaming")
+            result = model.create_chat_completion(
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_p=0.85,
+                repeat_penalty=1.05,
+                stream=False,
+            )
+            choices = result.get("choices", [])
+            message = choices[0].get("message", {}) if choices else {}
+            answer = message.get("content", "") if isinstance(message, dict) else ""
+            if not isinstance(answer, str) or not answer.strip():
+                raise RuntimeError(
+                    "The model returned no visible text on streaming and retry. "
+                    "Check server logs and model chat template."
+                )
+            yield answer
