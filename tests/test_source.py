@@ -65,7 +65,7 @@ def test_short_prompt_and_small_history():
     }
     prompt_text = ast.literal_eval(assignments["SYSTEM_PROMPT"])
     assert len(prompt_text) < 500
-    assert "ห้ามแต่งข้อเท็จจริง" in prompt_text
+    assert "ห้ามเดาหรือฟันธงเกินข้อมูล" in prompt_text
     assert "conversation[-6:]" in (ROOT / "model.py").read_text(encoding="utf-8")
 
 
