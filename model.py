@@ -44,11 +44,17 @@ def reference_information() -> str:
 
 
 def remove_legacy_model_cache() -> None:
-    """Remove only obsolete model revisions cached in this cloud instance."""
-    from huggingface_hub import scan_cache_dir
-
+    """Best-effort cleanup. Never prevent first-time model downloads."""
     try:
-        cache = scan_cache_dir()
+        from huggingface_hub import scan_cache_dir
+        from huggingface_hub.constants import HF_HUB_CACHE
+
+        cache_dir = Path(HF_HUB_CACHE)
+        if not cache_dir.is_dir():
+            LOGGER.info("Hugging Face cache not yet created; skipping cleanup")
+            return
+
+        cache = scan_cache_dir(cache_dir=cache_dir)
         revisions = [
             revision.commit_hash
             for repo in cache.repos
@@ -58,8 +64,9 @@ def remove_legacy_model_cache() -> None:
         if revisions:
             cache.delete_revisions(*revisions).execute()
             LOGGER.info("Cleared %d obsolete model revisions", len(revisions))
-    except (OSError, ValueError) as exc:
-        LOGGER.warning("Could not clean old model cache: %s", exc)
+    except Exception as exc:
+        # CacheNotFound is not an OSError. Cleanup must never block inference.
+        LOGGER.warning("Skipping optional model cache cleanup: %s", exc)
 
 
 @st.cache_resource(show_spinner=False)
