@@ -30,9 +30,9 @@ def test_active_model_is_upgraded():
         and isinstance(node.targets[0], ast.Name)
         and node.targets[0].id in {"MODEL_REPO", "MODEL_FILENAME", "MODEL_NAME"}
     }
-    assert settings["MODEL_REPO"] == "ggml-org/Qwen3-1.7B-GGUF"
-    assert settings["MODEL_FILENAME"] == "Qwen3-1.7B-Q4_K_M.gguf"
-    assert "1.7B" in settings["MODEL_NAME"]
+    assert settings["MODEL_REPO"] == "bartowski/Qwen_Qwen3.5-0.8B-GGUF"
+    assert settings["MODEL_FILENAME"] == "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
+    assert "0.8B" in settings["MODEL_NAME"]
 
 
 def test_reference_file_exists():
@@ -52,3 +52,24 @@ def test_prompt_does_not_copy_previous_bad_phrase():
     text = (ROOT / "model.py").read_text(encoding="utf-8")
     assert "หากมีข้อมูลยืนยันได้เพียงบางส่วน" not in text
     assert "ไม่สามารถ" in text
+
+
+def test_short_prompt_and_small_history():
+    tree = ast.parse((ROOT / "model.py").read_text(encoding="utf-8"))
+    assignments = {
+        target.id: node.value
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    prompt_parts = assignments["SYSTEM_PROMPT"].values
+    prompt_text = "".join(ast.literal_eval(part) for part in prompt_parts)
+    assert len(prompt_text) < 500
+    assert "ห้ามแต่งข้อเท็จจริง" in prompt_text
+
+
+def test_new_model_in_app():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "Qwen3.5" in app
+    assert "Qwen3-1.7B" not in app
