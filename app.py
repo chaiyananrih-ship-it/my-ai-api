@@ -47,7 +47,7 @@ with st.sidebar:
     temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.55, step=0.05)
     st.markdown("**โมเดล**")
     st.code(MODEL_NAME, language=None)
-    st.caption("Qwen2.5 · 0.5B · 4-bit GGUF · ใช้ CPU")
+    st.caption("Qwen2.5 · 1.5B · Q4_K_M · CPU")
     st.divider()
     if st.button("↺ เริ่มการสนทนาใหม่", use_container_width=True):
         st.session_state.messages = []
@@ -96,7 +96,7 @@ if question:
 
     with st.chat_message("assistant", avatar="🤖"):
         try:
-            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 491 MB)..."):
+            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 1.12 GB)..."):
                 engine, engine_lock = load_engine()
             messages = create_prompt(engine, st.session_state.messages, max_tokens)
             answer = st.write_stream(
@@ -114,4 +114,4 @@ if question:
         else:
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
-st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen2.5-0.5B-Instruct • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
+st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen2.5-1.5B-Instruct • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
