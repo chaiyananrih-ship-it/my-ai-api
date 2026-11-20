@@ -44,11 +44,12 @@ with st.sidebar:
     st.divider()
     st.markdown("**การตั้งค่าการตอบ**")
     max_tokens = st.slider("ความยาวสูงสุด", min_value=64, max_value=448, value=224, step=32)
-    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.35, step=0.05)
+    temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.2, value=0.25, step=0.05)
     st.markdown("**โมเดล**")
     st.code(MODEL_NAME, language=None)
     st.caption("Qwen3 · 1.7B · Q4_K_M · CPU")
     st.caption("ข้อมูลอ้างอิงจาก knowledge.txt จะถูกส่งพร้อมกฎการตอบทุกคำถาม")
+    st.warning("ข้อมูลใน knowledge.txt ตอนนี้เป็นสถานการณ์สมมติสำหรับทดสอบ ไม่ใช่ข้อมูลบริการจริง")
     st.divider()
     if st.button("↺ เริ่มการสนทนาใหม่", use_container_width=True):
         st.session_state.messages = []
