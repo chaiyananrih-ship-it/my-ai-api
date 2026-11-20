@@ -1,4 +1,4 @@
-"""Minimal Thai-friendly, CPU-only Qwen chat on Streamlit Community Cloud."""
+"""Thai-friendly, CPU-only Meta Llama chat on Streamlit Community Cloud."""
 from __future__ import annotations
 
 import json
@@ -47,7 +47,7 @@ with st.sidebar:
     temperature = st.slider("ความสร้างสรรค์", min_value=0.0, max_value=1.0, value=0.3, step=0.05)
     st.markdown("**โมเดล**")
     st.code(MODEL_NAME, language=None)
-    st.caption("Qwen3.5 · 0.8B · Q5_K_M · CPU")
+    st.caption("Meta Llama 3.2 · 1B · Q4_K_M · CPU")
     st.caption("ใช้กฎแบบสั้นและข้อมูลอ้างอิงทุกคำถาม · ส่งประวัติล่าสุดไม่เกิน 6 ข้อความ")
     st.warning("ข้อมูลใน knowledge.txt ตอนนี้เป็นสถานการณ์สมมติสำหรับทดสอบ ไม่ใช่ข้อมูลบริการจริง")
     st.divider()
@@ -98,7 +98,7 @@ if question:
 
     with st.chat_message("assistant", avatar="🤖"):
         try:
-            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 650 MB)..."):
+            with st.spinner("กำลังเตรียมโมเดล AI (ครั้งแรกอาจดาวน์โหลดประมาณ 808 MB)..."):
                 engine, engine_lock = load_engine()
             messages = create_prompt(engine, st.session_state.messages, max_tokens)
             answer = st.write_stream(
@@ -116,4 +116,4 @@ if question:
         else:
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
-st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Qwen3.5-0.8B • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
+st.markdown('<p class="fine-print" style="text-align:center;margin-top:2rem;">Mali AI • Llama 3.2 1B • คำตอบอาจคลาดเคลื่อน • ไม่เหมาะกับข้อมูลอ่อนไหว</p>', unsafe_allow_html=True)
