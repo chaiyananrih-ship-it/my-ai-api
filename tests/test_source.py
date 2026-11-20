@@ -51,7 +51,7 @@ def test_example_knowledge_is_active_and_labeled_demo():
 def test_prompt_does_not_copy_previous_bad_phrase():
     text = (ROOT / "model.py").read_text(encoding="utf-8")
     assert "หากมีข้อมูลยืนยันได้เพียงบางส่วน" not in text
-    assert "ไม่สามารถ" in text
+    assert "ห้ามเดาหรือฟันธงเกินข้อมูล" in text
 
 
 def test_short_prompt_and_small_history():
