@@ -1,75 +1,52 @@
-# Mali AI — AI ขนาดเล็กสำหรับ Streamlit
+# Mali AI — Meta Llama 3.2 1B on Streamlit Cloud
 
-Mali AI ใช้ **Qwen3.5-0.8B** แบบ **Q5_K_M GGUF** (~650 MB) จาก
-[bartowski/Qwen_Qwen3.5-0.8B-GGUF](https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF)
-ทำงานบน CPU ของ Streamlit Community Cloud โดยไม่ต้องมี API Key
+เว็บ AI ผู้ช่วยภาษาไทยรันด้วย **Meta Llama 3.2 1B Instruct Q4_K_M** (ไฟล์ GGUF ประมาณ **808 MB**) บน CPU โดยไม่ต้องใช้ API Key แบบเสียเงิน
 
-โมเดลใหม่เล็กกว่า Qwen3-1.7B (~1.28 GB) แต่ **ไม่รับประกันว่าฉลาดกว่าทุกงาน**
-จุดเน้นคือความเร็วและการตอบโดยยึดข้อมูลอ้างอิงที่กำหนด ไม่ใช่การคิดยาวโดยไม่จำเป็น
+โมเดล: [bartowski/Llama-3.2-1B-Instruct-GGUF](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF)
 
-## Deploy ผ่าน GitHub
+## เหตุผลที่เปลี่ยนค่าย
+Qwen3.5-0.8B เคยมีอาการแสดงว่า "โมเดลไม่ได้ส่งข้อความกลับมา" และรุ่นนั้นอาจใช้ reasoning tokens หรือ chat template ที่ต่างจากโปรเจกต์เดิม คำตอบจึงถูกซ่อน/ว่างได้
 
-1. เข้า https://share.streamlit.io แล้วเชื่อม GitHub
-2. Repository: `chaiyananrih-ship-it/my-ai-api` · Branch: `main`
-3. Main file path: `app.py` · Python 3.11 แนะนำ
-4. กด Deploy แล้วทดลองส่งคำถาม (ครั้งแรกจะดาวน์โหลดโมเดล ~650 MB)
-5. ถ้ามีแอปอยู่แล้ว เข้า **Manage app → Reboot app** และกด **เริ่มการสนทนาใหม่**
+แก้แล้ว:
+- เปลี่ยนมาใช้ Meta Llama 3.2 1B (รองรับภาษาไทยตามเอกสารโมเดล) แทน Qwen
+- **ลบการบังคับ `chat_format="chatml"`** เพื่อให้ llama-cpp-python อ่าน chat template ของโมเดลจาก GGUF
+- **ลบตัวกรองแท็ก `<think>`** ซึ่งอาจซ่อนคำตอบจนหมด
+- ถ้าสตรีมคำตอบว่าง จะลองสร้างข้อความอีกครั้งแบบไม่สตรีม (สูงสุด 1 ครั้ง) แล้วแจ้งข้อผิดพลาดให้ตรวจ Log หากยังว่างอยู่
+- ย่อกฎตอบคำถาม ส่งข้อมูลจาก `knowledge.txt` ทุกคำถาม
+- ดาวน์โหลดเฉพาะรุ่นใหม่และล้างแคชเฉพาะรุ่นเก่าที่เคยใช้ หากมีอยู่ใน instance
+- โมเดลเดิมไม่ได้เก็บเป็นไฟล์ใน GitHub
 
-> Streamlit Cloud ฟรีไม่รับประกัน RAM/CPU, ความเร็ว หรือการเปิดตลอด 24 ชั่วโมง
-> หากโหลดโมเดลไม่ได้ ให้ตรวจ Logs ใน Manage app
+**สำคัญ:** การเปลี่ยนรุ่นไม่ได้รับประกันว่า Llama 1B ฉลาดกว่ารุ่น 1.7B แต่เลือกเพื่อความเสถียรในการสร้างคำตอบบน CPU ฟรี ทดสอบคุณภาพอีกครั้งหลัง Deploy
 
-## ปรับข้อมูลที่ให้ AI รู้
+## Deploy
 
-แก้ไฟล์ [knowledge.txt](knowledge.txt) ใน GitHub
-โดยแต่ละบรรทัดที่ **ไม่ขึ้นต้นด้วย `#`** จะถูกส่งพร้อมกฎสั้นๆ ทุกคำถาม
-ข้อมูลปัจจุบันเป็น **สถานการณ์จำลอง** เกี่ยวกับเวลาแจ้งเรื่องและเวลาทำงานของเจ้าหน้าที่
+1. เปิด https://share.streamlit.io แล้วเลือก Repository `chaiyananrih-ship-it/my-ai-api`
+2. Branch `main`, Main file path `app.py`, แนะนำ Python 3.11
+3. หากเคย Deploy แล้ว เข้า Manage app → Reboot app
+4. เปิดแชตและกด **เริ่มการสนทนาใหม่**
+5. ลองถาม `ถ้าผมแจ้งเรื่องวันเสาร์ จะมีเจ้าหน้าที่ดำเนินการให้ทันทีไหม?`
 
-ตัวอย่างคำถามทดสอบ:
+การโหลดครั้งแรกจะดาวน์โหลดโมเดล ~808 MB จาก Hugging Face อาจใช้เวลานาน และเครื่องฟรีอาจมีปัญหา RAM/CPU ให้ดู Manage app → Logs
 
-```text
-ถ้าผมแจ้งเรื่องวันเสาร์ จะมีเจ้าหน้าที่ดำเนินการให้ทันทีไหม?
-```
+## ข้อมูลที่ AI ต้องใช้ตอบ
 
-คำตอบที่เหมาะสม:
+แก้ไข [knowledge.txt](knowledge.txt) ใน GitHub ข้อมูลที่ไม่ขึ้นต้นด้วย `#` จะถูกแนบไปในคำถามทุกครั้ง ตอนนี้เป็นข้อมูลจำลองเกี่ยวกับการแจ้งเรื่องวันเสาร์ ไม่ใช่ข้อมูลจริงของโรงเรียนหรือหน่วยงาน
 
-```text
-ส่งคำร้องวันเสาร์ได้ครับ เพราะเว็บไซต์รับคำร้องตลอด 24 ชั่วโมง
-แต่เจ้าหน้าที่ให้บริการตามเวลาปกติวันจันทร์–ศุกร์
-จึงยังยืนยันไม่ได้ว่าจะมีเจ้าหน้าที่ดำเนินการทันทีในวันเสาร์ครับ
-```
+โปรดแทนที่ด้วยข้อมูลที่ตรวจสอบแล้วก่อนนำไปใช้จริง และห้ามใส่รหัสผ่าน/ข้อมูลส่วนบุคคลใน Repository สาธารณะ
 
-เมื่อใช้งานจริงให้ลบข้อมูลจำลองและแทนด้วยข้อมูลที่ตรวจสอบแล้ว
-ห้ามใส่ข้อมูลส่วนบุคคลหรือข้อมูลลับ เพราะ GitHub Repository เป็น Public
+## ข้อจำกัด
 
-## ปรับความเร็ว
+- Llama 3.2 1B รองรับภาษาไทย แต่ยังเป็นโมเดลเล็ก ความสามารถในการวิเคราะห์ซับซ้อนมีขีดจำกัด
+- Streamlit Cloud ฟรีไม่รับประกันรัน 24 ชั่วโมงหรือความเร็ว
+- ค่าเริ่มต้นจำกัดการตอบ 160 tokens ประวัติล่าสุด 6 ข้อความและ context 2048 tokens
+- โมเดลไม่ได้ท่องเว็บ เรียก API จากภายนอก หรือมีความจำข้ามเซสชัน
+- ยังไม่ได้ยืนยันการทำงานของโมเดลจริงบนเครื่อง Streamlit Cloud ของคุณ
 
-- ระบบใช้ system prompt แบบย่อเพื่อให้ AI อ่านกฎเร็วขึ้น
-- ส่งประวัติแชตล่าสุดสูงสุด **6 ข้อความ** และเนื้อหาจาก `knowledge.txt` ไม่เกิน **1,200 ตัวอักษร**
-- ค่าเริ่มต้นจำกัดการตอบที่ **160 tokens** และมี slider ให้ปรับได้
-- โมเดลแชร์ร่วมกันในเซิร์ฟเวอร์ผ่าน `st.cache_resource`
-- ใช้ `n_ctx=2048`, `n_batch=64`, 2 CPU threads สูงสุด
-- ล้างแคชเฉพาะโมเดลรุ่นเก่าที่เคยใช้ หากยังอยู่ใน instance โดยไม่ลบไฟล์อื่น
+## ไฟล์
 
-**ข้อจำกัด:** คำตอบสั้นไม่ได้แปลว่า AI มีเหตุผลถูกต้องเสมอ และ 0.8B อาจด้อยกว่าโมเดลใหญ่ในโจทย์ยาก
-โมเดลนี้เป็นเว็บแชต Streamlit ไม่ใช่ API Server
+`app.py` หน้าเว็บ, `model.py` โหลดโมเดลและประมวลผล, `knowledge.txt` ข้อมูลอ้างอิง, `requirements.txt` dependencies และ `tests/test_source.py` ตรวจสอบโครงสร้าง
 
-## ไฟล์สำคัญ
+## License และเอกสาร
 
-- `app.py`: หน้าเว็บแชต
-- `model.py`: โหลดโมเดล กฎและการประมวลผล
-- `knowledge.txt`: ข้อมูลอ้างอิงสำหรับทุกคำถาม
-- `requirements.txt`: ไลบรารี Python
-- `tests/test_source.py`: ทดสอบโครงสร้างโปรเจกต์
-
-## Local run
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-แหล่งอ้างอิง: [Qwen3.5-0.8B model card](https://huggingface.co/Qwen/Qwen3.5-0.8B)
-· [GGUF download](https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF)
-· [Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud)
+โมเดลนี้อยู่ภายใต้ [Meta Llama 3.2 Community License](https://www.llama.com/llama3_2/license/) ต้องปฏิบัติตามเงื่อนไขก่อนเผยแพร่หรือใช้งาน
+อ้างอิง: [Llama GGUF](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF) · [Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud)
