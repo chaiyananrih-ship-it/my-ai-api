@@ -38,3 +38,17 @@ def test_active_model_is_upgraded():
 def test_reference_file_exists():
     assert (ROOT / "knowledge.txt").exists()
     assert "knowledge.txt" in (ROOT / "model.py").read_text(encoding="utf-8")
+
+
+def test_example_knowledge_is_active_and_labeled_demo():
+    text = (ROOT / "knowledge.txt").read_text(encoding="utf-8")
+    active = [line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")]
+    assert any("24 ชั่วโมง" in line for line in active)
+    assert any("จันทร์ถึงวันศุกร์" in line for line in active)
+    assert "สถานการณ์จำลอง" in text
+
+
+def test_prompt_does_not_copy_previous_bad_phrase():
+    text = (ROOT / "model.py").read_text(encoding="utf-8")
+    assert "หากมีข้อมูลยืนยันได้เพียงบางส่วน" not in text
+    assert "ไม่สามารถ" in text
